@@ -4,7 +4,7 @@ Kudobuzz Code: reactjs + expressjs  with a simple dashboard. Running Reviews agg
 ## Project Details
 Four applications in this repository:
 
-kudobuzzchallenge_react: React.JS application that show a simple visualization of how many reviews we have for each type, and the different percentage of
+react_app: React.JS application that show a simple visualization of how many reviews we have for each type, and the different percentage of
 Reviews coming from the different sources
 
 kudobuzzchallenge(root folder): Express.JS application (with kafka-node) that produces a periodic reviews data and consumes new messages from the api. 
