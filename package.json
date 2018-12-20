@@ -2,24 +2,37 @@
   "name": "kudobuzzchallenge-expressjs",
   "version": "0.0.0",
   "private": true,
+  "directories": {
+    "test": "test"
+  },
   "scripts": {
     "client": "cd react_app && npm start",
     "server": "nodemon app.js",
     "dev": "concurrently --kill-others-on-fail \"npm run server\" \"npm run client\"",
     "dev:server": "cd react_app && npm run start && cd .. && npm run start",
     "start": "node app.js",
-    "debug": "node --nolazy --inspect-brk=9229 mondodbWriter.js"
+    "debug": "node --nolazy --inspect-brk=9229 mondodbWriter.js",
+    "test": "mocha"
   },
   "dependencies": {
+    "chai": "^4.2.0",
+    "codecov": "^3.1.0",
     "concurrently": "^4.1.0",
     "cookie-parser": "~1.4.3",
     "cors": "^2.8.5",
     "debug": "~2.6.9",
     "express": "~4.16.0",
     "http-errors": "~1.6.2",
+    "istanbul": "^0.4.5",
     "kafka-node": "^3.0.1",
+    "mocha": "^5.2.0",
     "mongodb": "^3.1.10",
+    "mongoose": "^5.4.0",
     "morgan": "~1.9.0",
-    "pug": "2.0.0-beta11"
+    "pug": "2.0.0-beta11",
+    "should": "^13.2.3",
+    "sinon": "^7.2.2",
+    "sinon-mongoose": "^2.2.1",
+    "supertest": "^3.3.0"
   }
 }

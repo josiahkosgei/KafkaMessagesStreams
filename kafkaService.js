@@ -26,6 +26,26 @@ MongoClient.connect(url, {useNewUrlParser: true}, function (err, db) {
     mongodb=kbDb;
     console.log("Connected correctly to MongoDB server.");
 });
+
+function initDb(url, data) {
+    return MongoClient.connect(url)
+      .then(db => {
+        const requests = Object.keys(data).map(col => {
+          const collection = db.collection(col)
+          return collection.insert(data[col])
+        })
+        return Promise.all(requests)
+      })
+  }
+  
+  function dropDb(url) {
+    return MongoClient.connect(url)
+      .then(db => db.collections())
+      .then(collections => {
+        const requests = collections.map(col => col.drop())
+        return Promise.all(requests)
+      })
+  }
 var captureReview = function(doc){
     // insertReview(mongodb, doc, function () {});  
     handleNewReviewMessage(doc)
@@ -139,4 +159,4 @@ function handleNewReviewMessage(review) {
 
 } // handleNewReviewMessage
 
-module.exports = {handleNewReviewMessage,captureReview,getReviews };
+module.exports = {handleNewReviewMessage,captureReview,getReviews,initDb,dropDb };

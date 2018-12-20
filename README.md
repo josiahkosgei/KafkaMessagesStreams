@@ -14,7 +14,6 @@ kudobuzzchallenge(root folder): Express.JS application (with kafka-node) that pr
 
 * Kafka topic : "kb-new-review-topic"
 * Kafka port: 2181
-* node KafkaCountryProducer.js
 
 
 ## To run these applications, go through the following steps:

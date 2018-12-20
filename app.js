@@ -9,8 +9,13 @@ const cors = require('cors');
 var indexRouter = require('./routes/index');
 var reviewsRouter = require('./routes/reviews');
 var kafkaService = require('./kafkaService')
+const mongoose = require('mongoose');
 var app = express();
 const port = process.env.PORT || 5000;
+mongoose.connect('mongodb://127.0.0.1:27017/kb-new-review-topic-test');
+mongoose.connection.once('open', () => {
+  console.log('Connected to Database');
+})
 
 app.use(cors());
 app.options('*', cors());
