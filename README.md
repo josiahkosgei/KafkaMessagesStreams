@@ -21,6 +21,8 @@ Download or Clone the project
 ```
 cd KudobuzzCodeChallenge &&
 npm install
+cd KudobuzzCodeChallenge\react_app &&
+npm install
 ```
 ### Compiles and hot-reloads for development, runs the react and express.js apps concurrently
 ```
