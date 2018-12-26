@@ -21,7 +21,7 @@ class App extends React.Component {
       <div className="flexible-content">
      <Navbar color="indigo" dark expand="md">
           <NavbarBrand>
-            <strong className="white-text">Kudobuzz Challenge</strong>
+            <strong className="white-text">Kafka Message Streaming</strong>
           </NavbarBrand>
           <NavbarToggler
             onClick={this.toggleCollapse}

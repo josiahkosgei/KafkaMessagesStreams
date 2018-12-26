@@ -1,5 +1,5 @@
-#  Kafka Message Streams 
-Code: reactjs + expressjs  with a simple dashboard. Running Reviews aggregation using Apache Kafka Streams
+#  Kafka Message Streams for Site and Product Reviews
+Code: reactjs + expressjs  with a simple dashboard. Running Site and Product Reviews aggregation using Apache Kafka Streams
 
 ## Project Details
 Four applications in this repository:
