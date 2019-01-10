@@ -1,4 +1,7 @@
 /node_modules
+/bin
+/data
+/coverage
 /.pnp
 .pnp.js
 
