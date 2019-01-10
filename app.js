@@ -3,20 +3,21 @@ var express = require('express');
 var path = require('path');
 var cookieParser = require('cookie-parser');
 var logger = require('morgan');
-const cors = require('cors');
 
+const cors = require('cors');
 
 var indexRouter = require('./routes/index');
 var reviewsRouter = require('./routes/reviews');
-var kafkaService = require('./kafkaService')
-const mongoose = require('mongoose');
-var app = express();
-const port = process.env.PORT || 5000;
-mongoose.connect('mongodb://127.0.0.1:27017/kb-new-review-topic-test');
-mongoose.connection.once('open', () => {
-  console.log('Connected to Database');
-})
+var kafkaService = require('./kafka/kafkaService')
+var sse_middleware = require('./sse/sse-middleware');
 
+var app = express();
+
+const port = process.env.PORT || 5000;
+var channels = [];
+var interval;
+
+app.use(sse_middleware);
 app.use(cors());
 app.options('*', cors());
 
@@ -26,23 +27,48 @@ app.set('view engine', 'pug');
 
 app.use(logger('dev'));
 app.use(express.json());
-app.use(express.urlencoded({
-  extended: false
-}));
+app.use(express.urlencoded({  extended: false}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use('/', indexRouter);
 app.use('/reviews', reviewsRouter);
 
-// get reviews for a business
-app.get('/reviews/', (request, response, next) => {
-  let sources = []
-  let totalreviews = []
-  kafkaService.getReviews(request.query.business_id, function (results) {
+app.get('/reviews/stream', function(req, res) {
+  console.log("New subscriber request");
+  res.sseSetup();
+  channels.push(res);
+  res.sseOnClose(()=> {
+  })
+})
 
+// capture reviews from clients
+app.post('/reviews/data/', (request, response) => {
+  const postBody = request.body;
+  kafkaService.captureReview(postBody)
+  response.send(postBody);
+});
+// catch 404 and forward to error handler
+app.use(function (req, res, next) {
+  next(createError(404));
+});
+// error handler
+app.use(function (err, req, res) {
+  // set locals, only providing error in development
+  res.locals.message = err.message;
+  res.locals.error = req.app.get('env') === 'development' ? err : {};
+  // render the error page
+  res.status(err.status || 500);
+  res.render('error');
+});
+
+function createMockEvent(callback) {
+  sources=[];
+  totalreviews=[];
+ kafkaService.getReviews('WAUXU64B23N095540', function (results) {
     for (let i = 0; i < results.length; i++) {
       sources.push(results[i]._id.sources)
+     
       let productval = 0;
       let siteval = 0;
       if (results[i].reviews.length === 2) {
@@ -64,34 +90,26 @@ app.get('/reviews/', (request, response, next) => {
 
       }
     }
-    response.send({
-      sources,
-      totalreviews
-    });
+    callback({sources,totalreviews});  
   });
+}
 
-});
-
-// capture reviews from clients
-app.post('/reviews/data/', (request, response, next) => {
-  const postBody = request.body;
-  var ss = kafkaService.captureReview(postBody)
-  response.send(postBody);
-});
-
-// catch 404 and forward to error handler
-app.use(function (req, res, next) {
-  next(createError(404));
-});
-
-// error handler
-app.use(function (err, req, res, next) {
-  // set locals, only providing error in development
-  res.locals.message = err.message;
-  res.locals.error = req.app.get('env') === 'development' ? err : {};
-  // render the error page
-  res.status(err.status || 500);
-  res.render('error');
-});
-app.listen(port, () => console.log(`Listening on port ${port}`));
-module.exports = app;
+function start() {
+  let data={}; 
+  interval = setInterval(() => {
+    createMockEvent(function (results){
+      data=results
+    }); // to implement yourself
+   
+    for(let key in channels) {
+      if(channels.hasOwnProperty(key)) {
+        channels[key].sseSend(data);
+      }
+    }
+  }, 2000);
+};
+app.listen(port, function() {
+  console.log(`Listening on port ${port}...`);
+  start();
+})
+module.exports = app; 

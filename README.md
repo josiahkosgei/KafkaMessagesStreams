@@ -15,7 +15,6 @@ kafkamessagestreams(root folder): Express.JS application (with kafka-node) that 
 * Kafka topic : "kb-new-review-topic"
 * Kafka port: 2181
 
-
 ## To run these applications, go through the following steps:
 Download or Clone the project 
 ```

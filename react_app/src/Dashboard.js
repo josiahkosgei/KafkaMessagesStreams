@@ -3,24 +3,31 @@ import { Container,Col, Card, CardBody, Row } from "mdbreact";
 import { BrowserRouter as Router } from "react-router-dom";
 import { Bar } from 'react-chartjs-2';
 
-const API = 'http://localhost:3000';
 class Dashboard extends React.Component {
+ 
+     _eventSource= EventSource;
+     _open= Boolean;
+     API_URL = 'http://localhost:5000/reviews/stream/';
+
   constructor(props) {
     super(props);
     this.state = {
       collapseID: "",
-      sources: [],
-      source_reviews: [],
+      sources: {},
+      source_reviews: {},
       dataBar: {},
       barChartOptions: {}
     };
+    this.init();
+  } 
+  init() {
+    this._eventSource = new EventSource(this.API_URL);
+    this._eventSource.onmessage = (evt) => this._onMessage(evt);
+    this._eventSource.onerror   = (evt) => this._onError(evt);
+    this._eventSource.onopen = (evt) => this._onOpen(evt);
   }
-  
+
   render() {
-    let that=this;
-    this.getReviews().then(function() {
-      that.setBarData();
-    });
 
     let canvas_styles = {
       display: 'block',
@@ -43,26 +50,10 @@ class Dashboard extends React.Component {
               </Router>
     );
   }
-  async fetch(method, endpoint, body) {
-    try {
-      const response = await fetch(`${API}${endpoint}`, {
-        method,
-        body: body && JSON.stringify(body),
-        headers: {
-          'content-type': 'application/json',
-          accept: 'application/json'
-        },
-      });
-      return await response.json();
-    } catch (error) {
-      console.error(error);
-    }
-  }
-  async getReviews() {
-    this.setState({ loading: false, source_reviews: await this.fetch('get', '/reviews/?business_id=WAUXU64B23N095540') });
-  }
   async setBarData() {
-    this.state.dataBar= {
+    this.setState({ 
+      loading: false,
+      dataBar:{
         labels: ['Site Reviews', 'Product Reviews'],
         datasets: [
         {
@@ -84,28 +75,58 @@ class Dashboard extends React.Component {
         }
         ]
     }
-    this.state.barChartOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      scales: {
-      xAxes: [{
-          barPercentage: 1,
-          gridLines: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.1)'
-          }
-      }],
-      yAxes: [{
-          gridLines: {
-          display: true,
-          color: 'rgba(0, 0, 0, 0.1)'
-          },
-          ticks: {
-          beginAtZero: true
-          }
-      }]
-      }
+    });
+    this.setState({
+      loading: false,
+      barChartOptions: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+        xAxes: [{
+            barPercentage: 1,
+            gridLines: {
+            display: true,
+            color: 'rgba(0, 0, 0, 0.1)'
+            }
+        }],
+        yAxes: [{
+            gridLines: {
+            display: true,
+            color: 'rgba(0, 0, 0, 0.1)'
+            },
+            ticks: {
+            beginAtZero: true
+            }
+        }]
+        }
+    }
+    })
   }
+  
+  _onMessage(message) {
+    this._handleEvent(JSON.parse(message.data));
+  }
+
+  _onError(evt) {
+    console.log("Error:");
+    console.log(evt);
+  }
+
+  _onOpen(evt) {
+    console.log("Open:");
+    console.log(evt);
+  }
+
+  _handleEvent(event) {
+   
+    if (event) {
+      this.source_reviews = event;
+      this.setState({loading: false,source_reviews: event})
+      if (this.state.source_reviews.sources) {
+        this.setBarData();
+      }
+      
+   }
   }
 }
 

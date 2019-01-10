@@ -1,31 +1,46 @@
-/*
-This program connects to MongoDB (using the mongodb module )
-This program consumes Kafka messages from topic kb-new-review-topic to which the reviews are productd.
- 
-This program records each latest update of the reviews in MongoDB. If a Review does not yet exist for a review it is inserted.
- 
-The program ensures that the MongoDB /kb-new-review-topic/reviews collection contains the reviews at any point in time.
- 
-*/
 var MongoClient = require('mongodb').MongoClient;
 var assert = require('assert');
-
-// connect string for mongodb server running locally, connecting to a database called kb-new-review-topic
-var url = 'mongodb://127.0.0.1:27017/';
-
 var kafka = require('kafka-node')
 var Consumer = kafka.Consumer
-var client = new kafka.Client("localhost:2181/")
+var reviewsTopic = "kb-new-review-topic";
+var cfg = require('./config.js');
+let kafkaProducer = require('./KafkaProducerService');
+var client = new kafka.Client(cfg.kafka.host)
 var reviewsTopic = "kb-new-review-topic";
 
 var mongodb;
-
-MongoClient.connect(url, {useNewUrlParser: true}, function (err, db) {
+MongoClient.connect(cfg.MONGO_URL,{ useNewUrlParser: true }, function(err, db) {
     assert.equal(null, err);
-    const kbDb = db.db('kb-new-review-topic')
-    mongodb=kbDb;
     console.log("Connected correctly to MongoDB server.");
-});
+    mongodb= db.db(cfg.dbName);
+  });
+  
+// MongoClient.connect(cfg.connectionString,{ useNewUrlParser: true }).then(client => {
+//   let coll = client.db(cfg.dbName).collection(cfg.collectionName);
+//  mongodb= client.db(cfg.dbName);
+//   console.log('Connected to Database');
+//   // Remove everything instead of dropping, which could invalidate exisiting change streams
+//   return new Promise((resolve, reject) => {
+//       return coll.remove({}, function (err, res) {
+//           if (err) reject(err)
+//           else resolve (coll);
+//       });
+//   });
+// }).then(coll => {
+
+//   setInterval(printInsertions, 1000);
+
+//   // Start producer
+//   kafkaProducer(coll, function (err) {
+//     console.log("kafka Producer");
+//       if (err) {
+//           console.log(err);
+//       }
+//   });
+
+// }).catch(err => {
+//   console.log(err);
+// });
 
 function initDb(url, data) {
     return MongoClient.connect(url)
@@ -98,7 +113,7 @@ var updateReview = function (db, review, callback) {
 // returns all the reviews that match the query
 const findReviews = function (db,business_id, callback) {
     // Get the reviews collection
-    const collection = db.collection('reviews');
+    const collection = mongodb.collection(cfg.collectionName);
     var options =[
         {
           '$match': {
@@ -137,7 +152,8 @@ const findReviews = function (db,business_id, callback) {
                         callback(docs);
                      });
 }
-// Configure Kafka Consumer for Kafka "kb-new-review-topic" Topic and handle Kafka message
+
+// // Configure Kafka Consumer for Kafka "kb-new-review-topic" Topic and handle Kafka message
 var consumer = new Consumer(
     client,
     [],
@@ -149,10 +165,10 @@ consumer.on('message', function (message) {
 });
 
 consumer.addTopics([{
-    topic: reviewsTopic,
+    topic: cfg.kafka.topic,
     partition: 0,
     offset: 0
-}], () => console.log("topic " + reviewsTopic + " added to kafka consumer for listening"));
+}], () => console.log("topic //" + cfg.kafka.topic + "// added to kafka consumer for listening"));
 
 function handleNewReviewMessage(review) {
      insertReview(mongodb, review, function () {});
